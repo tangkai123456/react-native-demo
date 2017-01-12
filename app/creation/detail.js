@@ -18,10 +18,20 @@ import ReactNative, {
   ActivityIndicator,
   TouchableOpacity,
   ScrollView,
-  Image
+  Image,
+  ListView,
+  AlertIOS
 } from 'react-native'
 import Video from "react-native-video"
 import Icon from 'react-native-vector-icons/Ionicons'
+import config from '../common/config.js'
+import request from '../common/request.js'
+
+var cachedResults = {
+  nextPage: 1,
+  items: [],
+  totle: 0
+}
 
 export default class Account extends Component {
   constructor(props) {
@@ -29,6 +39,14 @@ export default class Account extends Component {
       this._pop = this._pop.bind(this)
       this._pause = this._pause.bind(this)
       this._resume = this._resume.bind(this)
+      this._fetchData = this._fetchData.bind(this)
+      this._hasMore = this._hasMore.bind(this)
+      this._fetchMoreData = this._fetchMoreData.bind(this)
+      this._renderFooter = this._renderFooter.bind(this)
+      this._renderHeader = this._renderHeader.bind(this)
+      var ds = new ListView.DataSource({
+        rowHasChanged: (r1, r2) => r1 !== r2
+      })
       this.state = {
         data: props.data,
         rate: 1,
@@ -36,7 +54,8 @@ export default class Account extends Component {
         resizeMode: "contain",
         repeat: false,
         videoReady: false,
-        paused: false
+        paused: false,
+        dataSource: ds.cloneWithRows([]) //评论数据
       }
     }
     // 返回上一页
@@ -76,9 +95,110 @@ export default class Account extends Component {
     })
   }
 
+  _fetchData() {
+      var url = config.api.base + config.api.comment
+
+      request.get(url, {
+          id: 123,
+        })
+        .then(data => {
+          if (data && data.success) {
+            var comments = data.data
+            if (comments && comments.length > 0) {
+              this.setState({
+                comments: comments,
+                dataSource: this.state.dataSource.cloneWithRows(comments)
+              })
+            }
+          }
+        })
+        .catch(e => {
+          AlertIOS.alert(e.message)
+        })
+    }
+    // 获取数据
+  _fetchData(page) {
+      this.setState({
+        isLoadingTail: true
+      })
+      request.get(config.api.base + config.api.comment, {
+          page: page,
+          creation: 123,
+        })
+        .then((data) => {
+          if (data.success) {
+            //获取数据后，放入缓存中
+            var items = cachedResults.items.slice();
+            items = items.concat(data.data)
+            cachedResults.items = items
+            console.log(cachedResults.items)
+            cachedResults.totle = data.totle
+            this.setState({
+              dataSource: this.state.dataSource.cloneWithRows(items),
+              isLoadingTail: false
+            })
+          }
+        })
+        .catch((error) => {
+          this.setState({
+            isLoadingTail: false,
+          })
+          console.error(error);
+        });
+    }
+    // 判断是否有更多的数据
+  _hasMore() {
+      return cachedResults.items.length !== cachedResults.totle
+    }
+    // 快到底部时获取更多数据
+  _fetchMoreData() {
+    // isLoadingTail表示正在加载更多数据，此时不能再次加载数据
+    if (!this._hasMore() || this.state.isLoadingTail) {
+      return
+    }
+    var page = cachedResults.nextPage
+    this._fetchData(page)
+  }
+
+  _renderFooter() {
+    if (!this._hasMore() && cachedResults.totle !== 0) {
+      return <View style={styles.loadingMore}><Text style={styles.loadingText}>没有更多了</Text></View>
+    }
+    if (!this.state.isLoadingTail) {
+      return <View></View>
+    }
+    return <ActivityIndicator style={styles.loadingMore}/>
+  }
+
+  _renderHeader() {
+    var data = this.state.data
+    return <View style={styles.infoBox}>
+              <Image style={styles.avatar} source={{uri:data.author.avatar}}/>
+              <View style={styles.descBox}>
+                <Text style={styles.nickname}>{data.author.nickname}</Text>
+                <Text style={styles.title}>{data.title}</Text>
+              </View>
+            </View>
+  }
+
+  _renderRow(row) {
+    return (
+      <View key={row._id} row={row} style={styles.replyBox}>
+        <Image style={styles.replyAvatar} source={{uri:row.replyBy.avatar}}/>
+          <View style={styles.reply}>
+            <Text style={styles.replyNickname}>{row.replyBy.nickname}</Text>
+            <Text style={styles.replyContent}>{row.content}</Text>
+          </View>
+      </View>
+    )
+  }
+
+  componentDidMount() {
+    this._fetchData()
+  }
+
   render() {
     var data = this.state.data
-    console.log(data.author)
     return (
       <View style={styles.tabContent}>
         <View style={styles.header}>
@@ -111,20 +231,18 @@ export default class Account extends Component {
             {this.state.paused?<Icon onPress={this._resume} name="ios-play" style={styles.resumeIcon} size={48}/>:<View></View>}
           </TouchableOpacity>
         </View>
-        <ScrollView
-          enableEmptySections={true}
-          automaticallyAdjustContentInsets={false}
-          showsVerticalScrollIndicator={true}//纵向滚动条
-          style={styles.scrollView}
-        >
-          <View style={styles.infoBox}>
-            <Image style={styles.avatar} source={{uri:data.author[0].avatar}}/>
-            <View style={styles.descBox}>
-              <Text style={styles.naciname}>{data.author[0].nickname}</Text>
-              <Text style={styles.title}>{data.title}</Text>
-            </View>
-          </View>        
-        </ScrollView>
+             
+          <ListView
+            dataSource={this.state.dataSource}
+            renderRow={this._renderRow}
+            enableEmptySections={true}
+            automaticallyAdjustContentInsets={false}
+            onEndReached={this._fetchMoreData}
+            onEndReachedThreshold={20}
+            renderFooter={this._renderFooter}//listview底部
+            renderHeader={this._renderHeader}//listview头部
+            style={styles.scrollView}
+          />   
       </View>
     )
   }
@@ -152,12 +270,12 @@ var styles = StyleSheet.create({
   },
   videoBox: {
     width: width,
-    height: 360,
+    height: width * .56,
     backgroundColor: "#000",
   },
   video: {
     width: width,
-    height: 360,
+    height: width * .56,
     backgroundColor: "#000"
   },
   pauseBtn: {
@@ -169,7 +287,7 @@ var styles = StyleSheet.create({
   },
   resumeIcon: {
     position: "absolute",
-    top: 140,
+    top: 75,
     left: width / 2 - 30,
     width: 60,
     height: 60,
@@ -238,6 +356,38 @@ var styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 16,
     color: "#666"
+  },
+  replyBox: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    marginTop: 10,
+  },
+  replyAvatar: {
+    width: 40,
+    height: 40,
+    marginRight: 10,
+    marginLeft: 10,
+    borderRadius: 20,
+  },
+  replyNickname: {
+    color: "#666"
+  },
+  replyContent: {
+    marginTop: 4,
+    color: "#666"
+  },
+  reply: {
+    flex: 1
+  },
+  scrollView: {
+    marginBottom: 50
+  },
+  loadingMore: {
+    marginVertical: 20
+  },
+  loadingText: {
+    color: "#777",
+    textAlign: "center"
   }
 
 });
