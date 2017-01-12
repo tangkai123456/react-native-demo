@@ -12,6 +12,8 @@ export default {
 		base: "http://rap.taobao.org/mockjs/12777/",
 		creations: "api/creations?",
 		up: "api/up?",
-		comment: "api/comments"
+		comment: "api/comments",
+		signup: "api/u/signup",
+		verify: "api/u/verify"
 	}
 }
