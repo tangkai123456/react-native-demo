@@ -21,7 +21,8 @@ import Icon, {
 
 import List from './app/creation/index.js'
 import Edit from './app/edit/index.js'
-import Account from './app/account/index.js'
+import Login from './app/account/login.js'
+
 
 
 class TestApp extends Component {
@@ -78,7 +79,7 @@ class TestApp extends Component {
               selectedTab: 'account',
             });
           }}>
-          <Account/>
+          <Login/>
         </TabBarItem>
       </TabBarIOS>
     )
