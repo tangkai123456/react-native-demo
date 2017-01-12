@@ -137,7 +137,7 @@ export default class Account extends Component {
     }
     // 判断是否有更多的数据
   _hasMore() {
-      return cachedResults.items.length !== cachedResults.total
+      return cachedResults.items.length < cachedResults.total
     }
     // 快到底部时获取更多数据
   _fetchMoreData() {
