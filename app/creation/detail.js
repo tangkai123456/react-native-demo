@@ -48,7 +48,6 @@ export default class Account extends Component {
       this._renderFooter = this._renderFooter.bind(this)
       this._renderHeader = this._renderHeader.bind(this)
       this._focus = this._focus.bind(this)
-      this._blur = this._blur.bind(this)
       this._setModalVisible = this._setModalVisible.bind(this)
       this._closeModal = this._closeModal.bind(this)
       this._submit = this._submit.bind(this)
@@ -192,11 +191,6 @@ export default class Account extends Component {
     this._setModalVisible(true)
   }
 
-  _blur() {
-    console.log(1)
-    this._setModalVisible(false)
-  }
-
   _closeModal() {
     this._setModalVisible(false)
   }
@@ -224,6 +218,7 @@ export default class Account extends Component {
       var url = config.api.base + config.api.comment
       request.post(url, body)
         .then((data) => {
+          console.log(data)
           if (data && data.success) {
             var items = cachedResults.items;
             items = [{
@@ -326,7 +321,6 @@ export default class Account extends Component {
                   placeholder="这里输入评论内容"
                   style={styles.content}
                   multiline={true}
-                  onBlur={this._blur}
                   defaultValue={this.state.content}
                   onChangeText={(text)=>{
                     this.setState({content:text})
@@ -489,10 +483,10 @@ var styles = StyleSheet.create({
   commentBox: {
     marginTop: 10,
     padding: 8,
-    width: width - 16
+    width: width
   },
   content: {
-    paddingLeft: 2,
+    padding: 5,
     color: "#333",
     borderWidth: 1,
     borderColor: "#ddd",
@@ -501,7 +495,7 @@ var styles = StyleSheet.create({
     height: 80
   },
   commentArea: {
-    width: width,
+    width: width - 16,
     paddingBottom: 6,
     paddingLeft: 10,
     paddingRight: 10,
@@ -527,7 +521,8 @@ var styles = StyleSheet.create({
     borderColor: "#ee753c",
     borderRadius: 5,
     color: "#ee753c",
-    fontSize: 18
+    fontSize: 18,
+    marginLeft: 10
   }
 
 });
