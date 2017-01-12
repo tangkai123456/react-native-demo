@@ -466,9 +466,6 @@ var styles = StyleSheet.create({
   reply: {
     flex: 1
   },
-  scrollView: {
-    marginBottom: 50
-  },
   loadingMore: {
     marginVertical: 20
   },
@@ -482,8 +479,7 @@ var styles = StyleSheet.create({
   },
   commentBox: {
     marginTop: 10,
-    padding: 8,
-    width: width
+    padding: 5,
   },
   content: {
     padding: 5,
@@ -492,10 +488,10 @@ var styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 4,
     fontSize: 14,
-    height: 80
+    height: 80,
   },
   commentArea: {
-    width: width - 16,
+    width: width,
     paddingBottom: 6,
     paddingLeft: 10,
     paddingRight: 10,
