@@ -17,28 +17,29 @@ import ReactNative, {
   Dimensions,
   ActivityIndicator,
   TouchableOpacity,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native'
 import Video from "react-native-video"
 import Icon from 'react-native-vector-icons/Ionicons'
 
 export default class Account extends Component {
   constructor(props) {
-    super(props);
-    this._pop = this._pop.bind(this)
-    this._pause=this._pause.bind(this)
-    this._resume=this._resume.bind(this)
-    this.state = {
-      data: props.data,
-      rate: 1,
-      muted: false,
-      resizeMode: "contain",
-      repeat: false,
-      videoReady:false,
-      paused:false
+      super(props);
+      this._pop = this._pop.bind(this)
+      this._pause = this._pause.bind(this)
+      this._resume = this._resume.bind(this)
+      this.state = {
+        data: props.data,
+        rate: 1,
+        muted: false,
+        resizeMode: "contain",
+        repeat: false,
+        videoReady: false,
+        paused: false
+      }
     }
-  }
-  // 返回上一页
+    // 返回上一页
   _pop() {
     this.props.navigator.pop()
   }
@@ -63,16 +64,21 @@ export default class Account extends Component {
     console.log("_onError")
   }
 
-  _pause(){
-    this.setState({paused:true})
+  _pause() {
+    this.setState({
+      paused: true
+    })
   }
 
-  _resume(){
-    this.setState({paused:false})
+  _resume() {
+    this.setState({
+      paused: false
+    })
   }
 
   render() {
     var data = this.state.data
+    console.log(data.author)
     return (
       <View style={styles.tabContent}>
         <View style={styles.header}>
@@ -111,7 +117,13 @@ export default class Account extends Component {
           showsVerticalScrollIndicator={true}//纵向滚动条
           style={styles.scrollView}
         >
-        
+          <View style={styles.infoBox}>
+            <Image style={styles.avatar} source={{uri:data.author[0].avatar}}/>
+            <View style={styles.descBox}>
+              <Text style={styles.naciname}>{data.author[0].nickname}</Text>
+              <Text style={styles.title}>{data.title}</Text>
+            </View>
+          </View>        
         </ScrollView>
       </View>
     )
@@ -148,60 +160,84 @@ var styles = StyleSheet.create({
     height: 360,
     backgroundColor: "#000"
   },
-  pauseBtn:{
-    width:width,
-    height:360,
-    position:"absolute",
-    left:0,
-    top:0
+  pauseBtn: {
+    width: width,
+    height: 360,
+    position: "absolute",
+    left: 0,
+    top: 0
   },
-  resumeIcon:{
-    position:"absolute",
-    top:140,
-    left:width/2-30,
-    width:60,
-    height:60,
-    paddingTop:8,
-    paddingLeft:22,
-    backgroundColor:"transparent",
-    borderColor:"#fff",
-    borderWidth:1,
-    borderRadius:30,
-    alignSelf:"center",
-    color:"#ed7b66"
+  resumeIcon: {
+    position: "absolute",
+    top: 140,
+    left: width / 2 - 30,
+    width: 60,
+    height: 60,
+    paddingTop: 8,
+    paddingLeft: 22,
+    backgroundColor: "transparent",
+    borderColor: "#fff",
+    borderWidth: 1,
+    borderRadius: 30,
+    alignSelf: "center",
+    color: "#ed7b66"
   },
-  header:{
-    flexDirection:"row",
-    justifyContent:"center",
-    alignItems:"center",
-    width:width,
-    height:64,
-    paddingTop:20,
-    paddingLeft:10,
-    paddingRight:10,
-    borderBottomWidth:1,
-    borderColor:"rgba(0,0,0,.1)",
-    backgroundColor:"#fff"
+  header: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    width: width,
+    height: 64,
+    paddingTop: 20,
+    paddingLeft: 10,
+    paddingRight: 10,
+    borderBottomWidth: 1,
+    borderColor: "rgba(0,0,0,.1)",
+    backgroundColor: "#fff"
   },
-  backBox:{
-    position:"absolute",
-    left:12,
-    top:32,
-    width:50,
-    flexDirection:"row",
-    alignItems:"center"
+  backBox: {
+    position: "absolute",
+    left: 12,
+    top: 32,
+    width: 50,
+    flexDirection: "row",
+    alignItems: "center"
   },
-  headerTitle:{
-    width:width-120,
-    textAlign:"center"
+  headerTitle: {
+    width: width - 120,
+    textAlign: "center"
   },
-  backIcon:{
-    color:"#999",
-    fontSize:20,
-    marginRight:5,
+  backIcon: {
+    color: "#999",
+    fontSize: 20,
+    marginRight: 5,
   },
-  backText:{
-    color:"#999"
+  backText: {
+    color: "#999"
+  },
+  infoBox: {
+    width: width,
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 10
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    marginRight: 10,
+    marginLeft: 10,
+    borderRadius: 30
+  },
+  descBox: {
+    flex: 1
+  },
+  nickname: {
+    fontSize: 18,
+  },
+  title: {
+    marginTop: 8,
+    fontSize: 16,
+    color: "#666"
   }
 
 });
