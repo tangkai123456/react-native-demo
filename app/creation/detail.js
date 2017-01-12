@@ -20,7 +20,9 @@ import ReactNative, {
   ScrollView,
   Image,
   ListView,
-  AlertIOS
+  AlertIOS,
+  TextInput,
+  Modal
 } from 'react-native'
 import Video from "react-native-video"
 import Icon from 'react-native-vector-icons/Ionicons'
@@ -44,6 +46,10 @@ export default class Account extends Component {
       this._fetchMoreData = this._fetchMoreData.bind(this)
       this._renderFooter = this._renderFooter.bind(this)
       this._renderHeader = this._renderHeader.bind(this)
+      this._focus = this._focus.bind(this)
+      this._blur = this._blur.bind(this)
+      this._setModalVisible = this._setModalVisible.bind(this)
+      this._closeModal = this._closeModal.bind(this)
       var ds = new ListView.DataSource({
         rowHasChanged: (r1, r2) => r1 !== r2
       })
@@ -55,7 +61,9 @@ export default class Account extends Component {
         repeat: false,
         videoReady: false,
         paused: false,
-        dataSource: ds.cloneWithRows([]) //评论数据
+        dataSource: ds.cloneWithRows([]), //评论数据
+        isLoadingTail: false,
+        modalVisable: false
       }
     }
     // 返回上一页
@@ -95,28 +103,7 @@ export default class Account extends Component {
     })
   }
 
-  _fetchData() {
-      var url = config.api.base + config.api.comment
-
-      request.get(url, {
-          id: 123,
-        })
-        .then(data => {
-          if (data && data.success) {
-            var comments = data.data
-            if (comments && comments.length > 0) {
-              this.setState({
-                comments: comments,
-                dataSource: this.state.dataSource.cloneWithRows(comments)
-              })
-            }
-          }
-        })
-        .catch(e => {
-          AlertIOS.alert(e.message)
-        })
-    }
-    // 获取数据
+  // 获取数据
   _fetchData(page) {
       this.setState({
         isLoadingTail: true
@@ -131,7 +118,6 @@ export default class Account extends Component {
             var items = cachedResults.items.slice();
             items = items.concat(data.data)
             cachedResults.items = items
-            console.log(cachedResults.items)
             cachedResults.totle = data.totle
             this.setState({
               dataSource: this.state.dataSource.cloneWithRows(items),
@@ -172,13 +158,49 @@ export default class Account extends Component {
 
   _renderHeader() {
     var data = this.state.data
-    return <View style={styles.infoBox}>
+    return <View style={styles.listHeader}>
+            <View style={styles.infoBox}>
               <Image style={styles.avatar} source={{uri:data.author.avatar}}/>
               <View style={styles.descBox}>
                 <Text style={styles.nickname}>{data.author.nickname}</Text>
                 <Text style={styles.title}>{data.title}</Text>
               </View>
             </View>
+            <View style={styles.commentBox}>
+              <View style={styles.commentBox}>
+                <Text>评论一下</Text>
+                <TextInput
+                  placeholder="这里输入评论内容"
+                  style={styles.content}
+                  multiline={true}
+                  onFocus={this._focus}
+                 />
+              </View>
+            </View>
+            <View style={styles.commentArea}>
+              <Text style={styles.commentTitle}>精彩评论</Text>
+            </View>
+
+          </View>
+  }
+
+  _focus() {
+    this._setModalVisible(true)
+  }
+
+  _blur() {
+    console.log(1)
+    this._setModalVisible(false)
+  }
+
+  _closeModal() {
+    this._setModalVisible(false)
+  }
+
+  _setModalVisible(isVisable) {
+    this.setState({
+      modalVisable: isVisable
+    })
   }
 
   _renderRow(row) {
@@ -231,7 +253,6 @@ export default class Account extends Component {
             {this.state.paused?<Icon onPress={this._resume} name="ios-play" style={styles.resumeIcon} size={48}/>:<View></View>}
           </TouchableOpacity>
         </View>
-             
           <ListView
             dataSource={this.state.dataSource}
             renderRow={this._renderRow}
@@ -242,7 +263,31 @@ export default class Account extends Component {
             renderFooter={this._renderFooter}//listview底部
             renderHeader={this._renderHeader}//listview头部
             style={styles.scrollView}
-          />   
+          />
+          <Modal
+            animationType={"fade"}
+            visible={this.state.modalVisable}
+            onRequestClose={()=>{this._setModalVisible(false)}}
+          >
+            <View style={styles.modalContainer}>
+              <Icon onPress={this._closeModal} name="ios-close-outline" style={styles.closeIcon}/>
+              <View style={styles.commentBox}>
+              <View style={styles.commentBox}>
+                <Text>评论一下</Text>
+                <TextInput
+                  placeholder="这里输入评论内容"
+                  style={styles.content}
+                  multiline={true}
+                  onBlur={this._blur}
+                  defaultValue={this.state.content}
+                  onChangeText={(text)=>{
+                    this.setState({content:text})
+                  }}
+                 />
+              </View>
+            </View>
+            </View>
+          </Modal>
       </View>
     )
   }
@@ -388,6 +433,42 @@ var styles = StyleSheet.create({
   loadingText: {
     color: "#777",
     textAlign: "center"
+  },
+  listHeader: {
+    marginTop: 10,
+    width: width
+  },
+  commentBox: {
+    marginTop: 10,
+    padding: 8,
+    width: width - 16
+  },
+  content: {
+    paddingLeft: 2,
+    color: "#333",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 4,
+    fontSize: 14,
+    height: 80
+  },
+  commentArea: {
+    width: width,
+    paddingBottom: 6,
+    paddingLeft: 10,
+    paddingRight: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee"
+  },
+  modalContainer: {
+    flex: 1,
+    paddingTop: 45,
+    backgroundColor: "#fff",
+  },
+  closeIcon: {
+    alignSelf: "center",
+    fontSize: 30,
+    color: "#ee753c"
   }
 
 });
