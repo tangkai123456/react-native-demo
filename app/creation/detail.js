@@ -28,11 +28,12 @@ import Video from "react-native-video"
 import Icon from 'react-native-vector-icons/Ionicons'
 import config from '../common/config.js'
 import request from '../common/request.js'
+import Button from 'react-native-button'
 
 var cachedResults = {
   nextPage: 1,
   items: [],
-  totle: 0
+  total: 0
 }
 
 export default class Account extends Component {
@@ -50,6 +51,7 @@ export default class Account extends Component {
       this._blur = this._blur.bind(this)
       this._setModalVisible = this._setModalVisible.bind(this)
       this._closeModal = this._closeModal.bind(this)
+      this._submit = this._submit.bind(this)
       var ds = new ListView.DataSource({
         rowHasChanged: (r1, r2) => r1 !== r2
       })
@@ -63,7 +65,9 @@ export default class Account extends Component {
         paused: false,
         dataSource: ds.cloneWithRows([]), //评论数据
         isLoadingTail: false,
-        modalVisable: false
+        modalVisable: false,
+        isSending: false,
+        content: ""
       }
     }
     // 返回上一页
@@ -118,7 +122,7 @@ export default class Account extends Component {
             var items = cachedResults.items.slice();
             items = items.concat(data.data)
             cachedResults.items = items
-            cachedResults.totle = data.totle
+            cachedResults.total = data.total
             this.setState({
               dataSource: this.state.dataSource.cloneWithRows(items),
               isLoadingTail: false
@@ -134,7 +138,7 @@ export default class Account extends Component {
     }
     // 判断是否有更多的数据
   _hasMore() {
-      return cachedResults.items.length !== cachedResults.totle
+      return cachedResults.items.length !== cachedResults.total
     }
     // 快到底部时获取更多数据
   _fetchMoreData() {
@@ -147,7 +151,7 @@ export default class Account extends Component {
   }
 
   _renderFooter() {
-    if (!this._hasMore() && cachedResults.totle !== 0) {
+    if (!this._hasMore() && cachedResults.total !== 0) {
       return <View style={styles.loadingMore}><Text style={styles.loadingText}>没有更多了</Text></View>
     }
     if (!this.state.isLoadingTail) {
@@ -200,6 +204,51 @@ export default class Account extends Component {
   _setModalVisible(isVisable) {
     this.setState({
       modalVisable: isVisable
+    })
+  }
+
+  _submit() {
+    if (!this.state.content) {
+      return AlertIOS.alert("评论不能为空")
+    }
+    if (this.state.isSending) {
+      return AlertIOS.alert("正在评论中！")
+    }
+    this.setState({
+      isSending: true
+    }, () => {
+      var body = {
+        creation: "123",
+        content: this.state.content
+      }
+      var url = config.api.base + config.api.comment
+      request.post(url, body)
+        .then((data) => {
+          if (data && data.success) {
+            var items = cachedResults.items;
+            items = [{
+              content: this.state.content,
+              replyBy: {
+                nickname: "zhangyu",
+                avatar: "http://dummyimage.com/640x640/420460"
+              }
+            }].concat(items)
+            cachedResults.items = items;
+            cachedResults.total += 1
+            this.setState({
+              content: "",
+              isSending: false,
+              dataSource: this.state.dataSource.cloneWithRows(cachedResults.items)
+            })
+            this._setModalVisible(false)
+          }
+        })
+        .catch((e) => {
+          AlertIOS.alert(e.message)
+          this.setState({
+            isSending: false,
+          })
+        })
     })
   }
 
@@ -272,7 +321,6 @@ export default class Account extends Component {
             <View style={styles.modalContainer}>
               <Icon onPress={this._closeModal} name="ios-close-outline" style={styles.closeIcon}/>
               <View style={styles.commentBox}>
-              <View style={styles.commentBox}>
                 <Text>评论一下</Text>
                 <TextInput
                   placeholder="这里输入评论内容"
@@ -285,7 +333,7 @@ export default class Account extends Component {
                   }}
                  />
               </View>
-            </View>
+              <Button style={styles.submitBtn} onPress={this._submit}>评论</Button>
             </View>
           </Modal>
       </View>
@@ -469,6 +517,17 @@ var styles = StyleSheet.create({
     alignSelf: "center",
     fontSize: 30,
     color: "#ee753c"
+  },
+  submitBtn: {
+    width: width - 20,
+    padding: 16,
+    marginTop: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#ee753c",
+    borderRadius: 5,
+    color: "#ee753c",
+    fontSize: 18
   }
 
 });

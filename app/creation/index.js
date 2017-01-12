@@ -30,7 +30,7 @@ var width = Dimensions.get("window").width
 var cachedResults = {
   nextPage: 1,
   items: [],
-  totle: 0
+  total: 0
 }
 
 export default class List extends Component {
@@ -79,7 +79,7 @@ export default class List extends Component {
               items = data.data.concat(items)
             }
             cachedResults.items = items
-            cachedResults.totle = data.totle
+            cachedResults.total = data.total
             if (page !== 0) {
               this.setState({
                 dataSource: this.state.dataSource.cloneWithRows(items),
@@ -103,7 +103,7 @@ export default class List extends Component {
     }
     // 判断是否有更多的数据
   _hasMore() {
-      return cachedResults.items.length !== cachedResults.totle
+      return cachedResults.items.length !== cachedResults.total
     }
     // 快到底部时获取更多数据
   _fetchMoreData() {
@@ -116,7 +116,7 @@ export default class List extends Component {
   }
 
   _renderFooter() {
-    if (!this._hasMore() && cachedResults.totle !== 0) {
+    if (!this._hasMore() && cachedResults.total !== 0) {
       return <View style={styles.loadingMore}><Text style={styles.loadingText}>没有更多了</Text></View>
     }
     if (!this.state.isLoadingTail) {
