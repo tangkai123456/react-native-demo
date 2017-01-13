@@ -16,7 +16,9 @@ import ReactNative, {
   TouchableOpacity,
   Dimensions,
   Image,
-  AlertIOS
+  AlertIOS,
+  Modal,
+  TextInput
 } from 'react-native'
 import Icon from 'react-native-vector-icons/Ionicons'
 import ImagePicker from 'react-native-image-picker'
@@ -26,6 +28,7 @@ import sha1 from "sha1"
 import {
   Circle
 } from "react-native-progress"
+import Button from 'react-native-button'
 
 var options = {
   title: '选择头像',
@@ -68,11 +71,17 @@ export default class Account extends Component {
     this.state = {
       user: user,
       avatarProgress: 0,
-      avatarUploading: false
+      avatarUploading: false,
+      modalVisible: false
     }
     this._pickPhoto = this._pickPhoto.bind(this)
     this._upload = this._upload.bind(this)
     this._asyncUser = this._asyncUser.bind(this)
+    this._edit = this._edit.bind(this)
+    this._closeModal = this._closeModal.bind(this)
+    this._changeUserState = this._changeUserState.bind(this)
+    this._submit = this._submit.bind(this)
+    this._logout = this._logout.bind(this)
   }
 
   _pickPhoto() {
@@ -173,12 +182,42 @@ export default class Account extends Component {
           var user = data.data
           if (isAvatar) {
             AlertIOS.alert("图片更新成功")
+          } else {
+            AlertIOS.alert("信息更新成功")
+            this._closeModal()
           }
           this.setState({
             user: user
           })
         }
       })
+      .catch((e) => {
+        AlertIOS.alert(e.message)
+      })
+  }
+
+  _edit() {
+    this.setState({
+      modalVisible: true
+    })
+  }
+  _closeModal() {
+    this.setState({
+      modalVisible: false
+    })
+  }
+  _changeUserState(name, value) {
+    var user = this.state.user
+    user[name] = value
+    this.setState({
+      user: user
+    })
+  }
+  _submit() {
+    this._asyncUser()
+  }
+  _logout() {
+    this.props.logout()
   }
   componentDidMount() {
 
@@ -189,6 +228,7 @@ export default class Account extends Component {
       <View style={styles.tabContent}>
         <View style={styles.toolbar}>
           <Text style={styles.toolbarTitle}>我的账户</Text>
+          <Text style={styles.toolbarExtra} onPress={this._edit}>编辑</Text>
         </View>
         {
           user.avatar?
@@ -233,6 +273,71 @@ export default class Account extends Component {
               </View>
             </TouchableOpacity>
         }
+        <Button  style={styles.btn} onPress={this._logout}>退出登录</Button>
+        <Modal animated={true} visible={this.state.modalVisible}>
+          <View style={styles.modalContainer}>
+            <Icon 
+              name="ios-close-outline"
+              style={styles.closeIcon}
+              onPress={this._closeModal}
+              />
+            <View style={styles.fieldItem}>
+              <Text style={styles.label}>昵称</Text>
+              <TextInput
+                placeholder="输入狗狗的昵称"
+                style={styles.inputField}
+                autoCapitalize="none"
+                autoCorrect={false}
+                defaultValue={user.nickname}
+                onChangeText={(text)=>{
+                  this._changeUserState("nickname",text)
+                }}
+              />
+            </View>
+            <View style={styles.fieldItem}>
+              <Text style={styles.label}>品种</Text>
+              <TextInput
+                placeholder="输入狗狗的品种"
+                style={styles.inputField}
+                autoCapitalize="none"
+                autoCorrect={false}
+                onChangeText={(text)=>{
+                  this._changeUserState("breed",text)
+                }}
+              />
+            </View>
+            <View style={styles.fieldItem}>
+              <Text style={styles.label}>年龄</Text>
+              <TextInput
+                placeholder="输入狗狗的年龄"
+                style={styles.inputField}
+                autoCapitalize="none"
+                autoCorrect={false}
+                onChangeText={(text)=>{
+                  this._changeUserState("age",text)
+                }}
+              />
+            </View>
+            <View style={styles.fieldItem}>
+              <Text style={styles.label}>性别</Text>
+              <Icon.Button
+                onPress={()=>{
+                  this._changeUserState("gender","male")
+                }}
+                style={[styles.gender,user.gender==="male"&&styles.genderChecked]}
+                name="ios-paw-outline">男
+              </Icon.Button>
+              <Icon.Button
+                onPress={()=>{
+                  this._changeUserState("gender","female")
+                }}
+                style={[styles.gender,user.gender==="female"&&styles.genderChecked]}
+                name="ios-paw">女
+              </Icon.Button>
+            </View>
+            <Button  style={styles.btn} onPress={this._submit}>提交</Button>
+          </View>
+        </Modal>
       </View>
     )
   }
@@ -289,5 +394,63 @@ var styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#999",
     resizeMode: "cover"
+  },
+  toolbarExtra: {
+    position: "absolute",
+    right: 10,
+    top: 26,
+    color: "#fff",
+    textAlign: "right",
+    fontWeight: "bold",
+    fontSize: 14
+  },
+  modalContainer: {
+    flex: 1,
+    paddingTop: 50,
+    backgroundColor: "#fff"
+  },
+  fieldItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 50,
+    paddingLeft: 15,
+    paddingRight: 15,
+    borderColor: "#eee",
+    borderBottomWidth: 1
+  },
+  label: {
+    color: "#ccc",
+    marginRight: 10
+  },
+  inputField: {
+    height: 50,
+    flex: 1,
+    color: "#666",
+    fontSize: 14
+  },
+  closeIcon: {
+    position: "absolute",
+    width: 40,
+    height: 40,
+    fontSize: 32,
+    right: 20,
+    top: 30,
+    color: "#ee735c"
+  },
+  gender: {
+    backgroundColor: "#ccc"
+  },
+  genderChecked: {
+    backgroundColor: "#ee735c"
+  },
+  btn: {
+    margin: 10,
+    padding: 10,
+    backgroundColor: "transparent",
+    borderColor: "#ee735c",
+    borderWidth: 1,
+    borderRadius: 4,
+    color: "#ee735c"
   }
 });

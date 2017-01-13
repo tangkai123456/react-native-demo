@@ -38,6 +38,7 @@ class TestApp extends Component {
     }
     this._asyncLoginStatus = this._asyncLoginStatus.bind(this)
     this.afterLogin = this.afterLogin.bind(this)
+    this.logout = this.logout.bind(this)
   }
   _asyncLoginStatus() {
     AsyncStorage.getItem("user")
@@ -65,6 +66,13 @@ class TestApp extends Component {
           logined: true
         })
       })
+  }
+  logout() {
+    AsyncStorage.removeItem("user")
+    this.setState({
+      logined: false,
+      user: null
+    })
   }
   componentDidMount() {
     this._asyncLoginStatus()
@@ -119,7 +127,7 @@ class TestApp extends Component {
               selectedTab: 'account',
             });
           }}>
-          <Account user={this.state.user}/>
+          <Account user={this.state.user} logout={this.logout}/>
         </TabBarItem>
       </TabBarIOS>
     )

@@ -309,9 +309,8 @@ export default class Account extends Component {
             style={styles.scrollView}
           />
           <Modal
-            animationType={"fade"}
+            animated={"fade"}
             visible={this.state.modalVisable}
-            onRequestClose={()=>{this._setModalVisible(false)}}
           >
             <View style={styles.modalContainer}>
               <Icon onPress={this._closeModal} name="ios-close-outline" style={styles.closeIcon}/>
