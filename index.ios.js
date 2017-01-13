@@ -13,7 +13,8 @@ import ReactNative, {
   TabBarIOS,
   Text,
   View,
-  Navigator
+  Navigator,
+  AsyncStorage
 } from 'react-native'
 import Icon, {
   TabBarItem
@@ -21,6 +22,7 @@ import Icon, {
 
 import List from './app/creation/index.js'
 import Edit from './app/edit/index.js'
+import Account from './app/account/index.js'
 import Login from './app/account/login.js'
 
 
@@ -30,10 +32,48 @@ class TestApp extends Component {
     super(props);
     // 进入页面默认首页
     this.state = {
-      selectedTab: "list"
+      selectedTab: "list",
+      logined: false,
+      user: null
     }
+    this._asyncLoginStatus = this._asyncLoginStatus.bind(this)
+    this.afterLogin = this.afterLogin.bind(this)
+  }
+  _asyncLoginStatus() {
+    AsyncStorage.getItem("user")
+      .then((data) => {
+        var user,
+          newState = {}
+        if (data) {
+          user = JSON.parse(data)
+        }
+        if (user && user.accessToken) {
+          newState.user = user
+          newState.logined = true
+        } else {
+          newState.logined = false
+        }
+        this.setState(newState)
+      })
+  }
+  afterLogin(user) {
+    console.log(typeof user, user)
+    AsyncStorage.setItem("user", JSON.stringify(user))
+      .then(() => {
+        this.setState({
+          user: user,
+          logined: true
+        })
+      })
+  }
+  componentDidMount() {
+    this._asyncLoginStatus()
+      //AsyncStorage.removeItem("user")
   }
   render() {
+    if (!this.state.logined) {
+      return <Login afterLogin={this.afterLogin}/>
+    }
     return (
       <TabBarIOS
         tintColor="#ee735c">
@@ -79,7 +119,7 @@ class TestApp extends Component {
               selectedTab: 'account',
             });
           }}>
-          <Login/>
+          <Account user={this.state.user}/>
         </TabBarItem>
       </TabBarIOS>
     )
